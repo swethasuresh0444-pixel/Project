@@ -15,9 +15,6 @@
     <!-- Google Fonts: Inter -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     
-    <!-- Chart.js for graphs -->
-    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
-    
     <style>
         * {
             margin: 0;
@@ -395,77 +392,67 @@
             box-shadow: none;
         }
 
-        /* Charts Row */
-        .charts-row {
-            display: grid;
-            grid-template-columns: 2fr 1fr;
-            gap: 24px;
-            margin-bottom: 28px;
-        }
-
-        .chart-card {
+        /* Stats Cards - Full Width */
+        .stats-panel {
             background: rgba(18, 25, 40, 0.65);
             backdrop-filter: blur(8px);
             border: 1px solid rgba(78, 138, 255, 0.12);
             border-radius: 32px;
-            padding: 24px;
+            padding: 28px;
+            margin-bottom: 28px;
         }
 
-        .chart-header {
+        .stats-title {
             display: flex;
-            justify-content: space-between;
-            margin-bottom: 18px;
             align-items: center;
-        }
-
-        .chart-title {
+            gap: 8px;
+            margin-bottom: 24px;
+            font-size: 18px;
             font-weight: 600;
-            color: #d0e0ff;
-            font-size: 16px;
+            color: #b7c9e2;
         }
 
-        .chart-update-badge {
-            font-size: 11px;
-            background: rgba(59, 130, 246, 0.2);
-            padding: 4px 10px;
-            border-radius: 30px;
-            color: #8bb4ff;
-        }
-
-        .chart-container {
-            position: relative;
-            height: 300px;
-            width: 100%;
-        }
-
-        /* Stats Cards */
         .stats-grid {
             display: grid;
-            grid-template-columns: repeat(4, 1fr);
-            gap: 16px;
-            margin-top: 10px;
+            grid-template-columns: repeat(6, 1fr);
+            gap: 20px;
         }
 
         .stat-card {
-            background: rgba(12, 18, 30, 0.7);
-            backdrop-filter: blur(4px);
-            border-radius: 20px;
-            padding: 16px;
-            text-align: center;
+            background: rgba(0, 0, 0, 0.25);
+            border-radius: 24px;
+            padding: 20px;
+            border: 1px solid rgba(255,255,255,0.03);
         }
 
         .stat-label {
-            font-size: 12px;
+            font-size: 13px;
             color: #8192b0;
-            margin-bottom: 8px;
+            margin-bottom: 10px;
             text-transform: uppercase;
             letter-spacing: 0.5px;
         }
 
-        .stat-number {
-            font-size: 24px;
+        .stat-value {
+            font-size: 28px;
             font-weight: 700;
             color: white;
+            margin-bottom: 4px;
+        }
+
+        .stat-unit {
+            font-size: 13px;
+            color: #6d8fc6;
+        }
+
+        .stat-trend {
+            font-size: 12px;
+            color: #4caf50;
+            margin-top: 8px;
+        }
+
+        .stat-trend.down {
+            color: #ef4444;
         }
 
         /* Alert */
@@ -495,42 +482,13 @@
             color: #ffb3b3;
         }
 
-        /* Legend */
-        .chart-legend {
-            display: flex;
-            justify-content: space-between;
-            margin-top: 16px;
-            padding-top: 16px;
-            border-top: 1px solid rgba(255,255,255,0.1);
-            font-size: 12px;
-            color: #9aaec9;
-        }
-
-        .legend-item {
-            display: flex;
-            align-items: center;
-            gap: 6px;
-        }
-
-        .legend-color {
-            width: 12px;
-            height: 12px;
-            border-radius: 4px;
-        }
-
-        .legend-color.acidic { background: #ef4444; }
-        .legend-color.optimal { background: #10b981; }
-        .legend-color.alkaline { background: #8b5cf6; }
-
+        /* Responsive */
         @media (max-width: 1200px) {
             .dashboard-grid {
                 grid-template-columns: repeat(2, 1fr);
             }
             .stats-grid {
-                grid-template-columns: repeat(2, 1fr);
-            }
-            .charts-row {
-                grid-template-columns: 1fr;
+                grid-template-columns: repeat(3, 1fr);
             }
         }
 
@@ -538,6 +496,7 @@
             .app { padding: 16px; }
             .dashboard-grid { grid-template-columns: 1fr; }
             .controls-grid { grid-template-columns: 1fr; }
+            .stats-grid { grid-template-columns: repeat(2, 1fr); }
             .header { flex-direction: column; align-items: start; gap: 16px; }
         }
     </style>
@@ -673,73 +632,61 @@
             </div>
         </div>
 
-        <!-- Charts & Analytics -->
-        <div class="charts-row">
-            <div class="chart-card">
-                <div class="chart-header">
-                    <span class="chart-title">
-                        <i class="fas fa-chart-line" style="margin-right: 8px; color: #3b82f6;"></i>
-                        pH Trend (Last 20 Readings)
-                    </span>
-                    <span class="chart-update-badge" id="readingCount">
-                        <i class="fas fa-database" style="margin-right: 4px;"></i>
-                        <span id="readingCountValue">0</span>/20
-                    </span>
+        <!-- Statistics Panel (Replacing the graph) -->
+        <div class="stats-panel">
+            <div class="stats-title">
+                <i class="fas fa-chart-bar" style="color: #3b82f6;"></i>
+                <span>Live Statistics & Readings</span>
+            </div>
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-label">Current pH</div>
+                    <div class="stat-value" id="currentPH">7.00</div>
+                    <div class="stat-unit">pH</div>
+                    <div class="stat-trend" id="phTrend">→ Stable</div>
                 </div>
-                <div class="chart-container">
-                    <canvas id="phChart"></canvas>
+                
+                <div class="stat-card">
+                    <div class="stat-label">Min pH (24h)</div>
+                    <div class="stat-value" id="minPH">--.--</div>
+                    <div class="stat-unit">pH</div>
                 </div>
-                <div class="chart-legend">
-                    <div class="legend-item">
-                        <div class="legend-color acidic"></div>
-                        <span>Acidic (&lt;6.5)</span>
-                    </div>
-                    <div class="legend-item">
-                        <div class="legend-color optimal"></div>
-                        <span>Optimal (6.5-8.5)</span>
-                    </div>
-                    <div class="legend-item">
-                        <div class="legend-color alkaline"></div>
-                        <span>Alkaline (&gt;8.5)</span>
-                    </div>
+                
+                <div class="stat-card">
+                    <div class="stat-label">Max pH (24h)</div>
+                    <div class="stat-value" id="maxPH">--.--</div>
+                    <div class="stat-unit">pH</div>
+                </div>
+                
+                <div class="stat-card">
+                    <div class="stat-label">Avg pH</div>
+                    <div class="stat-value" id="avgPH">--.--</div>
+                    <div class="stat-unit">pH</div>
+                </div>
+                
+                <div class="stat-card">
+                    <div class="stat-label">Temperature</div>
+                    <div class="stat-value" id="avgTempStat">25.0</div>
+                    <div class="stat-unit">°C</div>
+                </div>
+                
+                <div class="stat-card">
+                    <div class="stat-label">Turbidity</div>
+                    <div class="stat-value" id="avgTurbStat">42</div>
+                    <div class="stat-unit">NTU</div>
                 </div>
             </div>
             
-            <div class="chart-card">
-                <div class="chart-header">
-                    <span class="chart-title">
-                        <i class="fas fa-chart-pie" style="margin-right: 8px; color: #3b82f6;"></i>
-                        Live Statistics
+            <!-- Last 5 Readings Mini List -->
+            <div style="margin-top: 24px; padding-top: 20px; border-top: 1px solid rgba(255,255,255,0.1);">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+                    <span style="color: #9aaec9; font-size: 14px;">
+                        <i class="fas fa-history" style="margin-right: 8px;"></i>Recent pH Readings
                     </span>
+                    <span style="color: #6d8fc6; font-size: 12px;" id="readingCount">0 readings</span>
                 </div>
-                <div class="stats-grid">
-                    <div class="stat-card">
-                        <div class="stat-label">Min pH</div>
-                        <div class="stat-number" id="minPH">--.--</div>
-                    </div>
-                    <div class="stat-card">
-                        <div class="stat-label">Max pH</div>
-                        <div class="stat-number" id="maxPH">--.--</div>
-                    </div>
-                    <div class="stat-card">
-                        <div class="stat-label">Avg pH</div>
-                        <div class="stat-number" id="avgPH">--.--</div>
-                    </div>
-                    <div class="stat-card">
-                        <div class="stat-label">Current</div>
-                        <div class="stat-number" id="currentPH">--.--</div>
-                    </div>
-                </div>
-                
-                <div style="margin-top: 20px; padding: 16px; background: rgba(0,0,0,0.2); border-radius: 16px;">
-                    <div style="display: flex; justify-content: space-between; margin-bottom: 12px;">
-                        <span style="color: #9aaec9;"><i class="fas fa-thermometer-half" style="margin-right: 6px; color: #f59e0b;"></i>Temperature</span>
-                        <span style="color: white; font-weight: 600;" id="avgTempStat">--.-°C</span>
-                    </div>
-                    <div style="display: flex; justify-content: space-between;">
-                        <span style="color: #9aaec9;"><i class="fas fa-water" style="margin-right: 6px; color: #3b82f6;"></i>Turbidity</span>
-                        <span style="color: white; font-weight: 600;" id="avgTurbStat">---NTU</span>
-                    </div>
+                <div style="display: flex; gap: 12px; flex-wrap: wrap;" id="recentReadings">
+                    <!-- Recent readings will be inserted here -->
                 </div>
             </div>
         </div>
@@ -787,105 +734,17 @@
         const maxPHEl = document.getElementById('maxPH');
         const avgPHEl = document.getElementById('avgPH');
         const currentPHEl = document.getElementById('currentPH');
+        const phTrend = document.getElementById('phTrend');
         const avgTempStat = document.getElementById('avgTempStat');
         const avgTurbStat = document.getElementById('avgTurbStat');
-        const readingCountValue = document.getElementById('readingCountValue');
+        const readingCount = document.getElementById('readingCount');
+        const recentReadings = document.getElementById('recentReadings');
 
         // Data Storage
         let phHistory = [];
         let tempHistory = [];
         let turbHistory = [];
-        let timeLabels = [];
         const maxDataPoints = 20;
-
-        // Initialize Chart
-        const ctx = document.getElementById('phChart').getContext('2d');
-        
-        // Create gradient
-        const gradient = ctx.createLinearGradient(0, 0, 0, 300);
-        gradient.addColorStop(0, 'rgba(59, 130, 246, 0.6)');
-        gradient.addColorStop(0.7, 'rgba(59, 130, 246, 0.1)');
-        gradient.addColorStop(1, 'rgba(59, 130, 246, 0)');
-
-        const phChart = new Chart(ctx, {
-            type: 'line',
-            data: {
-                labels: [],
-                datasets: [{
-                    label: 'pH Value',
-                    data: [],
-                    borderColor: '#3b82f6',
-                    backgroundColor: gradient,
-                    borderWidth: 3,
-                    pointRadius: 4,
-                    pointHoverRadius: 6,
-                    pointBackgroundColor: '#3b82f6',
-                    pointBorderColor: '#ffffff',
-                    pointBorderWidth: 2,
-                    tension: 0.3,
-                    fill: true
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: {
-                    legend: {
-                        display: false
-                    },
-                    tooltip: {
-                        backgroundColor: '#1e2a44',
-                        titleColor: '#fff',
-                        bodyColor: '#b0c4de',
-                        borderColor: '#3b82f6',
-                        borderWidth: 1,
-                        callbacks: {
-                            label: function(context) {
-                                return `pH: ${context.raw.toFixed(2)}`;
-                            }
-                        }
-                    }
-                },
-                scales: {
-                    y: {
-                        min: 4,
-                        max: 10,
-                        grid: {
-                            color: 'rgba(255, 255, 255, 0.05)',
-                            drawBorder: false
-                        },
-                        ticks: {
-                            color: '#8b9bb5',
-                            stepSize: 1,
-                            callback: function(value) {
-                                return value.toFixed(1);
-                            }
-                        },
-                        title: {
-                            display: true,
-                            text: 'pH Value',
-                            color: '#8b9bb5'
-                        }
-                    },
-                    x: {
-                        grid: {
-                            display: false
-                        },
-                        ticks: {
-                            color: '#8b9bb5',
-                            maxRotation: 45,
-                            minRotation: 45,
-                            font: {
-                                size: 10
-                            }
-                        }
-                    }
-                },
-                animation: {
-                    duration: 500
-                }
-            }
-        });
 
         // Helper Functions
         function formatTime() {
@@ -910,44 +769,85 @@
             lastUpdate.innerHTML = `<i class="far fa-clock" style="margin-right: 6px;"></i>${formatTime()}`;
         }
 
+        function calculateTrend() {
+            if (phHistory.length < 3) return '→ Stable';
+            
+            const lastThree = phHistory.slice(-3);
+            const avg = lastThree.reduce((a, b) => a + b, 0) / 3;
+            const current = phHistory[phHistory.length - 1];
+            
+            if (current > avg + 0.1) return '↑ Rising';
+            if (current < avg - 0.1) return '↓ Falling';
+            return '→ Stable';
+        }
+
         function updateStatistics() {
             if (phHistory.length > 0) {
                 const min = Math.min(...phHistory);
                 const max = Math.max(...phHistory);
                 const avg = phHistory.reduce((a, b) => a + b, 0) / phHistory.length;
+                const current = phHistory[phHistory.length - 1];
                 
                 minPHEl.textContent = min.toFixed(2);
                 maxPHEl.textContent = max.toFixed(2);
                 avgPHEl.textContent = avg.toFixed(2);
-                currentPHEl.textContent = phHistory[phHistory.length - 1].toFixed(2);
+                currentPHEl.textContent = current.toFixed(2);
+                phTrend.textContent = calculateTrend();
+                
+                // Update trend color
+                if (phTrend.textContent.includes('Rising')) {
+                    phTrend.style.color = '#ef4444';
+                } else if (phTrend.textContent.includes('Falling')) {
+                    phTrend.style.color = '#3b82f6';
+                } else {
+                    phTrend.style.color = '#4caf50';
+                }
             }
 
             if (tempHistory.length > 0) {
                 const avgTemp = tempHistory.reduce((a, b) => a + b, 0) / tempHistory.length;
-                avgTempStat.textContent = avgTemp.toFixed(1) + '°C';
+                avgTempStat.textContent = avgTemp.toFixed(1);
             }
 
             if (turbHistory.length > 0) {
                 const avgTurb = turbHistory.reduce((a, b) => a + b, 0) / turbHistory.length;
-                avgTurbStat.textContent = Math.round(avgTurb) + ' NTU';
+                avgTurbStat.textContent = Math.round(avgTurb);
             }
 
-            readingCountValue.textContent = phHistory.length;
+            // Update reading count
+            readingCount.textContent = `${phHistory.length} readings`;
+
+            // Update recent readings display
+            updateRecentReadings();
         }
 
-        function updateChart() {
-            // Update chart with new data
-            phChart.data.labels = timeLabels;
-            phChart.data.datasets[0].data = [...phHistory];
-            phChart.update();
+        function updateRecentReadings() {
+            if (phHistory.length === 0) {
+                recentReadings.innerHTML = '<span style="color: #6d8fc6;">No readings yet</span>';
+                return;
+            }
+
+            // Get last 5 readings
+            const lastFive = phHistory.slice(-5).reverse();
+            const times = timeLabels ? timeLabels.slice(-5).reverse() : [];
             
-            console.log('Chart updated with pH values:', phHistory);
+            let html = '';
+            lastFive.forEach((ph, index) => {
+                const time = times[index] || '--:--:--';
+                const color = ph < 6.5 ? '#ef4444' : (ph > 8.5 ? '#8b5cf6' : '#10b981');
+                html += `
+                    <div style="background: rgba(0,0,0,0.3); padding: 8px 16px; border-radius: 30px; display: inline-flex; align-items: center; gap: 8px;">
+                        <span style="color: #9aaec9; font-size: 11px;">${time}</span>
+                        <span style="color: ${color}; font-weight: 600; font-size: 16px;">${ph.toFixed(2)}</span>
+                        <span style="color: #6d8fc6; font-size: 10px;">pH</span>
+                    </div>
+                `;
+            });
+            
+            recentReadings.innerHTML = html;
         }
 
         function addDataPoint(ph, temp, turb) {
-            // Add timestamp
-            timeLabels.push(formatTime());
-            
             // Add pH to history
             phHistory.push(ph);
             
@@ -958,7 +858,6 @@
             // Keep only last maxDataPoints
             if (phHistory.length > maxDataPoints) {
                 phHistory.shift();
-                timeLabels.shift();
             }
             if (tempHistory.length > maxDataPoints) {
                 tempHistory.shift();
@@ -967,8 +866,7 @@
                 turbHistory.shift();
             }
             
-            // Update chart and statistics
-            updateChart();
+            // Update statistics
             updateStatistics();
         }
 
@@ -995,6 +893,9 @@
             }
         }
 
+        // Store time labels for recent readings
+        let timeLabels = [];
+
         // Firebase Listeners
         const sensorsRef = database.ref('algaeTank');
         
@@ -1019,6 +920,12 @@
             
             // Update pH arrow
             updatePHArrow(ph);
+            
+            // Add timestamp
+            timeLabels.push(formatTime());
+            if (timeLabels.length > maxDataPoints) {
+                timeLabels.shift();
+            }
             
             // Add new data point
             addDataPoint(ph, temp, turb);
@@ -1083,13 +990,13 @@
             if (phHistory.length === 0) {
                 console.log('No real data received, showing demo data');
                 
-                // Generate demo data with realistic pH variations
-                for (let i = 0; i < 15; i++) {
-                    // Create realistic pH variations between 6.5 and 8.0
-                    const demoPh = 7.0 + Math.sin(i * 0.7) * 0.4 + (Math.random() * 0.2);
-                    const demoTemp = 25 + Math.sin(i * 0.3) * 1.5;
-                    const demoTurb = 45 + Math.sin(i * 0.5) * 15;
+                // Generate demo data
+                for (let i = 0; i < 8; i++) {
+                    const demoPh = 7.0 + Math.sin(i * 0.7) * 0.3;
+                    const demoTemp = 25 + Math.sin(i * 0.3) * 1;
+                    const demoTurb = 45 + Math.sin(i * 0.5) * 10;
                     
+                    timeLabels.push(formatTime());
                     addDataPoint(demoPh, demoTemp, demoTurb);
                 }
             }
