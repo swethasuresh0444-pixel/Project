@@ -127,6 +127,13 @@
             border-radius: 50%;
             background: #4caf50;
             box-shadow: 0 0 12px #4caf50;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.5; }
+            100% { opacity: 1; }
         }
 
         .status-dot.disconnected {
@@ -228,6 +235,7 @@
             background: rgba(0,0,0,0.25);
             padding: 4px 12px;
             border-radius: 30px;
+            display: inline-block;
         }
 
         .ph-scale {
@@ -323,6 +331,7 @@
             font-weight: 600;
             color: #8aa4d0;
             border: 1px solid #2d405c;
+            margin-left: auto;
         }
 
         .toggle-switch {
@@ -427,6 +436,7 @@
             display: flex;
             justify-content: space-between;
             margin-bottom: 18px;
+            align-items: center;
         }
 
         .chart-title {
@@ -434,9 +444,18 @@
             color: #d0e0ff;
         }
 
+        .chart-update-badge {
+            font-size: 11px;
+            background: rgba(59, 130, 246, 0.2);
+            padding: 4px 10px;
+            border-radius: 30px;
+            color: #8bb4ff;
+        }
+
         .chart-container {
             position: relative;
             height: 200px;
+            width: 100%;
         }
 
         /* Stats Cards */
@@ -491,6 +510,18 @@
         .alert-text {
             font-weight: 500;
             color: #ffb3b3;
+        }
+
+        /* Debug panel (hidden by default) */
+        .debug-panel {
+            margin-top: 20px;
+            padding: 15px;
+            background: rgba(0,0,0,0.3);
+            border-radius: 12px;
+            font-family: monospace;
+            font-size: 12px;
+            color: #8bb4ff;
+            display: none;
         }
 
         /* Responsive */
@@ -650,6 +681,7 @@
             <div class="chart-card">
                 <div class="chart-header">
                     <span class="chart-title"><i class="far fa-chart-line" style="margin-right: 8px;"></i>pH Trend (last 20 readings)</span>
+                    <span class="chart-update-badge" id="readingCount">0/20 readings</span>
                 </div>
                 <div class="chart-container">
                     <canvas id="phChart"></canvas>
@@ -685,6 +717,9 @@
             <i class="fas fa-exclamation-triangle alert-icon"></i>
             <span class="alert-text" id="alertMessage">pH level is critical!</span>
         </div>
+
+        <!-- Debug Panel (hidden by default, uncomment to see debug info) -->
+        <!-- <div class="debug-panel" id="debugPanel"></div> -->
     </div>
 
     <script>
@@ -699,6 +734,7 @@
             appId: "1:1076760612229:web:cf45011cd62ba1509ed1e9"
         };
 
+        // Initialize Firebase
         firebase.initializeApp(firebaseConfig);
         const db = firebase.database();
 
@@ -711,8 +747,6 @@
         const lightToggle = document.getElementById('lightToggle');
         const pumpStatus = document.getElementById('pumpStatus');
         const lightStatus = document.getElementById('lightStatus');
-        const pumpLed = document.getElementById('pumpLed');
-        const lightLed = document.getElementById('lightLed');
         const lastUpdate = document.getElementById('lastUpdate');
         const alertSection = document.getElementById('alertSection');
         const alertMessage = document.getElementById('alertMessage');
@@ -722,48 +756,109 @@
         const maxPH = document.getElementById('maxPH');
         const avgTemp = document.getElementById('avgTemp');
         const avgTurb = document.getElementById('avgTurb');
+        const readingCount = document.getElementById('readingCount');
+        // const debugPanel = document.getElementById('debugPanel');
 
         // Data arrays
         let phHistory = [];
         let tempHistory = [];
         let turbHistory = [];
-        let timestamps = [];
+        let timeLabels = [];
         const maxPoints = 20;
 
-        // Chart initialization
+        // Initialize Chart
         const ctx = document.getElementById('phChart').getContext('2d');
-        let phChart = new Chart(ctx, {
+        
+        // Create gradient for chart fill
+        const gradient = ctx.createLinearGradient(0, 0, 0, 200);
+        gradient.addColorStop(0, 'rgba(59, 130, 246, 0.3)');
+        gradient.addColorStop(1, 'rgba(59, 130, 246, 0.0)');
+
+        const phChart = new Chart(ctx, {
             type: 'line',
             data: {
                 labels: [],
                 datasets: [{
-                    label: 'pH',
+                    label: 'pH Value',
                     data: [],
                     borderColor: '#3b82f6',
-                    backgroundColor: 'rgba(59, 130, 246, 0.1)',
-                    borderWidth: 2,
-                    pointRadius: 3,
-                    tension: 0.2,
+                    backgroundColor: gradient,
+                    borderWidth: 3,
+                    pointRadius: 4,
+                    pointHoverRadius: 6,
+                    pointBackgroundColor: '#3b82f6',
+                    pointBorderColor: 'white',
+                    pointBorderWidth: 2,
+                    tension: 0.3,
                     fill: true
                 }]
             },
             options: {
                 responsive: true,
                 maintainAspectRatio: false,
-                plugins: { legend: { display: false } },
-                scales: {
-                    y: { min: 4, max: 10, grid: { color: 'rgba(255,255,255,0.05)' } },
-                    x: { grid: { display: false } }
+                plugins: {
+                    legend: {
+                        display: false
+                    },
+                    tooltip: {
+                        backgroundColor: '#1e2a44',
+                        titleColor: '#fff',
+                        bodyColor: '#b0c4de',
+                        borderColor: '#3b82f6',
+                        borderWidth: 1
+                    }
                 },
-                elements: { line: { borderWidth: 2 } }
+                scales: {
+                    y: {
+                        min: 4,
+                        max: 10,
+                        grid: {
+                            color: 'rgba(255,255,255,0.05)',
+                            drawBorder: false
+                        },
+                        ticks: {
+                            color: '#8b9bb5',
+                            stepSize: 1
+                        }
+                    },
+                    x: {
+                        grid: {
+                            display: false
+                        },
+                        ticks: {
+                            color: '#8b9bb5',
+                            maxRotation: 0,
+                            callback: function(val, index) {
+                                return index % 4 === 0 ? '•' : '';
+                            }
+                        }
+                    }
+                },
+                elements: {
+                    line: {
+                        borderWidth: 2
+                    }
+                },
+                animation: {
+                    duration: 500
+                }
             }
         });
 
-        // Update pH arrow
+        // Debug function (optional)
+        function debugLog(message) {
+            console.log(message);
+            // if (debugPanel) {
+            //     debugPanel.innerHTML += '<div>' + new Date().toLocaleTimeString() + ': ' + message + '</div>';
+            // }
+        }
+
+        // Update pH arrow position
         function setPhArrow(ph) {
             if (ph >= 0 && ph <= 14) {
                 const percent = (ph / 14) * 100;
                 phArrow.style.left = percent + '%';
+                debugLog(`pH arrow set to ${percent}%`);
             }
         }
 
@@ -774,23 +869,49 @@
             lastUpdate.innerHTML = `<i class="far fa-clock" style="margin-right: 6px;"></i>${time}`;
         }
 
-        // Update stats
+        // Update statistics
         function updateStats() {
-            if (phHistory.length) {
+            if (phHistory.length > 0) {
                 minPH.textContent = Math.min(...phHistory).toFixed(2);
                 maxPH.textContent = Math.max(...phHistory).toFixed(2);
             }
-            if (tempHistory.length) {
-                const avg = tempHistory.reduce((a,b)=>a+b,0)/tempHistory.length;
+            
+            if (tempHistory.length > 0) {
+                const avg = tempHistory.reduce((a, b) => a + b, 0) / tempHistory.length;
                 avgTemp.textContent = avg.toFixed(1) + '°C';
             }
-            if (turbHistory.length) {
-                const avg = turbHistory.reduce((a,b)=>a+b,0)/turbHistory.length;
+            
+            if (turbHistory.length > 0) {
+                const avg = turbHistory.reduce((a, b) => a + b, 0) / turbHistory.length;
                 avgTurb.textContent = Math.round(avg) + 'NTU';
+            }
+
+            // Update reading count
+            readingCount.textContent = `${phHistory.length}/${maxPoints} readings`;
+        }
+
+        // Update chart
+        function updateChart() {
+            if (phHistory.length > 0) {
+                // Create time labels (HH:MM:SS)
+                const now = new Date();
+                timeLabels.push(now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit' }));
+                
+                // Keep only last maxPoints labels
+                if (timeLabels.length > maxPoints) {
+                    timeLabels.shift();
+                }
+
+                // Update chart data
+                phChart.data.labels = timeLabels;
+                phChart.data.datasets[0].data = [...phHistory];
+                phChart.update();
+                
+                debugLog(`Chart updated with ${phHistory.length} points`);
             }
         }
 
-        // Alert check
+        // Check for alerts
         function checkAlerts(ph, temp, turb) {
             let show = false;
             let msg = '';
@@ -814,78 +935,144 @@
             }
         }
 
-        // Firebase listeners
+        // Firebase data listener
         const sensorsRef = db.ref('algaeTank');
-        sensorsRef.on('value', (snap) => {
-            const data = snap.val();
-            if (!data) return;
-
-            // Update values
-            if (data.ph !== undefined) {
-                phEl.textContent = data.ph.toFixed(2);
-                setPhArrow(data.ph);
-                phHistory.push(data.ph);
-            }
-            if (data.temperature !== undefined) {
-                tempEl.textContent = data.temperature.toFixed(1);
-                tempHistory.push(data.temperature);
-            }
-            if (data.turbidity !== undefined) {
-                turbEl.textContent = Math.round(data.turbidity);
-                turbHistory.push(data.turbidity);
+        
+        sensorsRef.on('value', (snapshot) => {
+            const data = snapshot.val();
+            debugLog('Firebase data received: ' + JSON.stringify(data));
+            
+            if (!data) {
+                debugLog('No data available');
+                return;
             }
 
-            // Trim history
-            if (phHistory.length > maxPoints) phHistory.shift();
-            if (tempHistory.length > maxPoints) tempHistory.shift();
-            if (turbHistory.length > maxPoints) turbHistory.shift();
+            // Update pH value
+            if (data.ph !== undefined && data.ph !== null) {
+                const ph = parseFloat(data.ph);
+                if (!isNaN(ph)) {
+                    phEl.textContent = ph.toFixed(2);
+                    setPhArrow(ph);
+                    
+                    // Add to history
+                    phHistory.push(ph);
+                    if (phHistory.length > maxPoints) {
+                        phHistory.shift();
+                    }
+                    
+                    debugLog(`pH updated: ${ph}`);
+                }
+            }
 
-            // Update chart
-            phChart.data.labels = Array(phHistory.length).fill('•');
-            phChart.data.datasets[0].data = phHistory;
-            phChart.update();
+            // Update temperature
+            if (data.temperature !== undefined && data.temperature !== null) {
+                const temp = parseFloat(data.temperature);
+                if (!isNaN(temp)) {
+                    tempEl.textContent = temp.toFixed(1);
+                    tempHistory.push(temp);
+                    if (tempHistory.length > maxPoints) {
+                        tempHistory.shift();
+                    }
+                    debugLog(`Temperature updated: ${temp}`);
+                }
+            }
 
+            // Update turbidity
+            if (data.turbidity !== undefined && data.turbidity !== null) {
+                const turb = parseFloat(data.turbidity);
+                if (!isNaN(turb)) {
+                    turbEl.textContent = Math.round(turb);
+                    turbHistory.push(turb);
+                    if (turbHistory.length > maxPoints) {
+                        turbHistory.shift();
+                    }
+                    debugLog(`Turbidity updated: ${turb}`);
+                }
+            }
+
+            // Update chart and stats
+            updateChart();
             updateStats();
-            checkAlerts(data.ph || 7, data.temperature || 25, data.turbidity || 0);
+            
+            // Check alerts with current values
+            checkAlerts(
+                data.ph || 7, 
+                data.temperature || 25, 
+                data.turbidity || 0
+            );
+            
+            // Update timestamp
             updateTimestamp();
+        }, (error) => {
+            debugLog('Firebase error: ' + error.message);
+            console.error('Firebase error:', error);
         });
 
-        // Pump listener
-        db.ref('algaeTank/pump').on('value', (snap) => {
-            const state = snap.val() === 1;
+        // Pump state listener
+        db.ref('algaeTank/pump').on('value', (snapshot) => {
+            const state = snapshot.val() === 1;
             pumpToggle.checked = state;
-            pumpStatus.innerHTML = `<span class="status-led ${state ? '' : 'off'}" id="pumpLed"></span><span>Currently ${state ? 'ON' : 'OFF'}</span>`;
+            const statusHtml = `<span class="status-led ${state ? '' : 'off'}"></span><span>Currently ${state ? 'ON' : 'OFF'}</span>`;
+            pumpStatus.innerHTML = statusHtml;
+            debugLog(`Pump state: ${state ? 'ON' : 'OFF'}`);
         });
 
-        // Light listener
-        db.ref('algaeTank/light').on('value', (snap) => {
-            const state = snap.val() === 1;
+        // Light state listener
+        db.ref('algaeTank/light').on('value', (snapshot) => {
+            const state = snapshot.val() === 1;
             lightToggle.checked = state;
-            lightStatus.innerHTML = `<span class="status-led ${state ? '' : 'off'}" id="lightLed"></span><span>Currently ${state ? 'ON' : 'OFF'}</span>`;
+            const statusHtml = `<span class="status-led ${state ? '' : 'off'}"></span><span>Currently ${state ? 'ON' : 'OFF'}</span>`;
+            lightStatus.innerHTML = statusHtml;
+            debugLog(`Light state: ${state ? 'ON' : 'OFF'}`);
         });
 
         // Connection status
-        db.ref('.info/connected').on('value', (snap) => {
-            if (snap.val()) {
+        db.ref('.info/connected').on('value', (snapshot) => {
+            if (snapshot.val()) {
                 connectionDot.className = 'status-dot';
                 connectionStatus.textContent = 'Connected';
+                debugLog('Firebase connected');
             } else {
                 connectionDot.className = 'status-dot disconnected';
                 connectionStatus.textContent = 'Disconnected';
+                debugLog('Firebase disconnected');
             }
         });
 
         // Control functions
         function controlPump(state) {
-            db.ref('algaeTank/pump').set(state ? 1 : 0);
+            const value = state ? 1 : 0;
+            db.ref('algaeTank/pump').set(value)
+                .then(() => debugLog(`Pump set to ${value}`))
+                .catch(error => debugLog(`Error setting pump: ${error.message}`));
         }
 
         function controlLight(state) {
-            db.ref('algaeTank/light').set(state ? 1 : 0);
+            const value = state ? 1 : 0;
+            db.ref('algaeTank/light').set(value)
+                .then(() => debugLog(`Light set to ${value}`))
+                .catch(error => debugLog(`Error setting light: ${error.message}`));
         }
 
-        // Initialize arrow
+        // Initialize with default values
         setPhArrow(7.0);
+        updateTimestamp();
+
+        // For testing - simulate data if no Firebase data (remove in production)
+        setTimeout(() => {
+            if (phHistory.length === 0) {
+                debugLog('No data received, showing demo data');
+                // Generate demo data
+                for (let i = 0; i < 10; i++) {
+                    const demoPh = 6.5 + Math.random() * 1.5;
+                    phHistory.push(demoPh);
+                    tempHistory.push(24 + Math.random() * 4);
+                    turbHistory.push(30 + Math.random() * 40);
+                }
+                updateChart();
+                updateStats();
+            }
+        }, 5000);
     </script>
 </body>
 </html>
