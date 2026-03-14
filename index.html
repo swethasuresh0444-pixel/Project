@@ -44,15 +44,6 @@
             background: radial-gradient(circle at 20% 20%, #1a2f4e, #0a0e1a);
         }
 
-        .background::before {
-            content: '';
-            position: absolute;
-            width: 100%;
-            height: 100%;
-            background: url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI4MCIgaGVpZ2h0PSI4MCIgdmlld0JveD0iMCAwIDgwIDgwIj48cGF0aCBkPSJNMzAsMjBhMTAsMTAgMCAwLDEgMjAsMCAxMCwxMCAwIDAsMS0yMCwwIE01MCw1MGExMCwxMCAwIDAsMSAyMCwwIDEwLDEwIDAgMCwxLTIwLDAgTTEwLDUwYTEwLDEwIDAgMCwxIDIwLDAgMTAsMTAgMCAwLDEtMjAsMCBaIiBmaWxsPSIjZmZmIiBvcGFjaXR5PSIwLjAyIi8+PC9zdmc+');
-            opacity: 0.4;
-        }
-
         .app {
             position: relative;
             max-width: 1440px;
@@ -70,7 +61,6 @@
             padding: 20px 28px;
             background: rgba(18, 25, 40, 0.7);
             backdrop-filter: blur(12px);
-            -webkit-backdrop-filter: blur(12px);
             border-radius: 28px;
             border: 1px solid rgba(78, 138, 255, 0.15);
             box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
@@ -98,7 +88,6 @@
         .logo-text h1 {
             font-size: 22px;
             font-weight: 700;
-            letter-spacing: -0.5px;
             background: linear-gradient(135deg, #fff, #bdd3ff);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
@@ -117,7 +106,6 @@
             padding: 10px 18px;
             background: rgba(0, 0, 0, 0.3);
             border-radius: 40px;
-            border: 1px solid rgba(255, 255, 255, 0.05);
         }
 
         .status-dot {
@@ -166,7 +154,6 @@
         .sensor-card {
             background: rgba(18, 25, 40, 0.65);
             backdrop-filter: blur(8px);
-            -webkit-backdrop-filter: blur(8px);
             border: 1px solid rgba(78, 138, 255, 0.12);
             border-radius: 32px;
             padding: 28px;
@@ -177,7 +164,6 @@
         .sensor-card:hover {
             transform: translateY(-4px);
             border-color: rgba(59, 130, 246, 0.3);
-            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.6);
         }
 
         .sensor-header {
@@ -197,14 +183,12 @@
             justify-content: center;
             font-size: 22px;
             color: #3b82f6;
-            border: 1px solid rgba(59, 130, 246, 0.2);
         }
 
         .sensor-title h3 {
             font-size: 16px;
             font-weight: 500;
             color: #9aaec9;
-            letter-spacing: 0.3px;
         }
 
         .sensor-main {
@@ -217,7 +201,6 @@
         .sensor-value {
             font-size: 42px;
             font-weight: 700;
-            letter-spacing: -1px;
             color: white;
         }
 
@@ -225,7 +208,6 @@
             font-size: 16px;
             font-weight: 500;
             color: #6a7f9f;
-            margin-left: 6px;
         }
 
         .sensor-range {
@@ -261,7 +243,6 @@
         .controls-panel {
             background: rgba(18, 25, 40, 0.65);
             backdrop-filter: blur(8px);
-            -webkit-backdrop-filter: blur(8px);
             border: 1px solid rgba(78, 138, 255, 0.12);
             border-radius: 32px;
             padding: 28px;
@@ -373,7 +354,6 @@
 
         .slider:before {
             position: absolute;
-            cursor: pointer;
             content: "";
             height: 24px;
             width: 24px;
@@ -426,7 +406,6 @@
         .chart-card {
             background: rgba(18, 25, 40, 0.65);
             backdrop-filter: blur(8px);
-            -webkit-backdrop-filter: blur(8px);
             border: 1px solid rgba(78, 138, 255, 0.12);
             border-radius: 32px;
             padding: 24px;
@@ -455,7 +434,7 @@
 
         .chart-container {
             position: relative;
-            height: 250px;
+            height: 300px;
             width: 100%;
         }
 
@@ -472,7 +451,6 @@
             backdrop-filter: blur(4px);
             border-radius: 20px;
             padding: 16px;
-            border: 1px solid rgba(255,255,255,0.02);
             text-align: center;
         }
 
@@ -488,12 +466,6 @@
             font-size: 24px;
             font-weight: 700;
             color: white;
-        }
-
-        .stat-unit {
-            font-size: 12px;
-            color: #6d8fc6;
-            margin-left: 2px;
         }
 
         /* Alert */
@@ -523,7 +495,33 @@
             color: #ffb3b3;
         }
 
-        /* Responsive */
+        /* Legend */
+        .chart-legend {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 16px;
+            padding-top: 16px;
+            border-top: 1px solid rgba(255,255,255,0.1);
+            font-size: 12px;
+            color: #9aaec9;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .legend-color {
+            width: 12px;
+            height: 12px;
+            border-radius: 4px;
+        }
+
+        .legend-color.acidic { background: #ef4444; }
+        .legend-color.optimal { background: #10b981; }
+        .legend-color.alkaline { background: #8b5cf6; }
+
         @media (max-width: 1200px) {
             .dashboard-grid {
                 grid-template-columns: repeat(2, 1fr);
@@ -691,10 +689,19 @@
                 <div class="chart-container">
                     <canvas id="phChart"></canvas>
                 </div>
-                <div style="display: flex; justify-content: space-between; margin-top: 12px; font-size: 12px; color: #6d8fc6;">
-                    <span><i class="fas fa-arrow-down" style="color: #ef4444;"></i> Acidic</span>
-                    <span><i class="fas fa-minus" style="color: #10b981;"></i> Optimal 6.5-8.5</span>
-                    <span><i class="fas fa-arrow-up" style="color: #8b5cf6;"></i> Alkaline</span>
+                <div class="chart-legend">
+                    <div class="legend-item">
+                        <div class="legend-color acidic"></div>
+                        <span>Acidic (&lt;6.5)</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-color optimal"></div>
+                        <span>Optimal (6.5-8.5)</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-color alkaline"></div>
+                        <span>Alkaline (&gt;8.5)</span>
+                    </div>
                 </div>
             </div>
             
@@ -719,13 +726,12 @@
                         <div class="stat-number" id="avgPH">--.--</div>
                     </div>
                     <div class="stat-card">
-                        <div class="stat-label">Stability</div>
-                        <div class="stat-number" id="stability">--</div>
+                        <div class="stat-label">Current</div>
+                        <div class="stat-number" id="currentPH">--.--</div>
                     </div>
                 </div>
                 
-                <!-- Mini temperature stats -->
-                <div style="margin-top: 20px; padding-top: 16px; border-top: 1px solid rgba(255,255,255,0.1);">
+                <div style="margin-top: 20px; padding: 16px; background: rgba(0,0,0,0.2); border-radius: 16px;">
                     <div style="display: flex; justify-content: space-between; margin-bottom: 12px;">
                         <span style="color: #9aaec9;"><i class="fas fa-thermometer-half" style="margin-right: 6px; color: #f59e0b;"></i>Temperature</span>
                         <span style="color: white; font-weight: 600;" id="avgTempStat">--.-°C</span>
@@ -780,7 +786,7 @@
         const minPHEl = document.getElementById('minPH');
         const maxPHEl = document.getElementById('maxPH');
         const avgPHEl = document.getElementById('avgPH');
-        const stabilityEl = document.getElementById('stability');
+        const currentPHEl = document.getElementById('currentPH');
         const avgTempStat = document.getElementById('avgTempStat');
         const avgTurbStat = document.getElementById('avgTurbStat');
         const readingCountValue = document.getElementById('readingCountValue');
@@ -796,9 +802,9 @@
         const ctx = document.getElementById('phChart').getContext('2d');
         
         // Create gradient
-        const gradient = ctx.createLinearGradient(0, 0, 0, 250);
-        gradient.addColorStop(0, 'rgba(59, 130, 246, 0.5)');
-        gradient.addColorStop(0.5, 'rgba(59, 130, 246, 0.2)');
+        const gradient = ctx.createLinearGradient(0, 0, 0, 300);
+        gradient.addColorStop(0, 'rgba(59, 130, 246, 0.6)');
+        gradient.addColorStop(0.7, 'rgba(59, 130, 246, 0.1)');
         gradient.addColorStop(1, 'rgba(59, 130, 246, 0)');
 
         const phChart = new Chart(ctx, {
@@ -904,19 +910,6 @@
             lastUpdate.innerHTML = `<i class="far fa-clock" style="margin-right: 6px;"></i>${formatTime()}`;
         }
 
-        function calculateStability() {
-            if (phHistory.length < 2) return '--';
-            
-            // Calculate standard deviation
-            const mean = phHistory.reduce((a, b) => a + b, 0) / phHistory.length;
-            const variance = phHistory.reduce((a, b) => a + Math.pow(b - mean, 2), 0) / phHistory.length;
-            const stdDev = Math.sqrt(variance);
-            
-            if (stdDev < 0.2) return 'Stable';
-            if (stdDev < 0.5) return 'Moderate';
-            return 'Fluctuating';
-        }
-
         function updateStatistics() {
             if (phHistory.length > 0) {
                 const min = Math.min(...phHistory);
@@ -926,7 +919,7 @@
                 minPHEl.textContent = min.toFixed(2);
                 maxPHEl.textContent = max.toFixed(2);
                 avgPHEl.textContent = avg.toFixed(2);
-                stabilityEl.textContent = calculateStability();
+                currentPHEl.textContent = phHistory[phHistory.length - 1].toFixed(2);
             }
 
             if (tempHistory.length > 0) {
@@ -948,12 +941,7 @@
             phChart.data.datasets[0].data = [...phHistory];
             phChart.update();
             
-            // Log for debugging
-            console.log('Chart updated:', {
-                labels: timeLabels.length,
-                data: phHistory.length,
-                lastValue: phHistory[phHistory.length - 1]
-            });
+            console.log('Chart updated with pH values:', phHistory);
         }
 
         function addDataPoint(ph, temp, turb) {
@@ -1090,16 +1078,17 @@
                 .catch(error => console.error('Error setting light:', error));
         }
 
-        // Initialize with some demo data if no real data after 5 seconds
+        // Generate demo data if no real data after 5 seconds
         setTimeout(() => {
             if (phHistory.length === 0) {
                 console.log('No real data received, showing demo data');
                 
-                // Generate demo data
-                for (let i = 0; i < 10; i++) {
-                    const demoPh = 6.8 + Math.sin(i * 0.5) * 0.3 + (Math.random() * 0.2);
-                    const demoTemp = 25 + Math.random() * 2;
-                    const demoTurb = 40 + Math.random() * 20;
+                // Generate demo data with realistic pH variations
+                for (let i = 0; i < 15; i++) {
+                    // Create realistic pH variations between 6.5 and 8.0
+                    const demoPh = 7.0 + Math.sin(i * 0.7) * 0.4 + (Math.random() * 0.2);
+                    const demoTemp = 25 + Math.sin(i * 0.3) * 1.5;
+                    const demoTurb = 45 + Math.sin(i * 0.5) * 15;
                     
                     addDataPoint(demoPh, demoTemp, demoTurb);
                 }
