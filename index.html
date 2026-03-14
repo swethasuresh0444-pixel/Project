@@ -3,17 +3,20 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Algae Tank Control System</title>
+    <title>AlgaeTank Pro · Control System</title>
     
     <!-- Firebase SDK -->
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-database-compat.js"></script>
     
-    <!-- Font Awesome for icons -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <!-- Font Awesome 6 -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
-    <!-- Google Fonts -->
-    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <!-- Google Fonts: Inter -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    
+    <!-- Chart.js for graphs -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
     
     <style>
         * {
@@ -23,175 +26,323 @@
         }
 
         body {
-            font-family: 'Roboto', sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            font-family: 'Inter', sans-serif;
+            background: #0b0f1a;
+            color: #e5e9f0;
             min-height: 100vh;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            padding: 20px;
+            line-height: 1.5;
+            -webkit-font-smoothing: antialiased;
         }
 
-        .container {
-            max-width: 500px;
+        /* Glassmorphism background */
+        .background {
+            position: fixed;
+            top: 0;
+            left: 0;
             width: 100%;
-            background: rgba(255, 255, 255, 0.95);
-            border-radius: 20px;
-            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
-            padding: 30px;
-            backdrop-filter: blur(10px);
+            height: 100%;
+            z-index: -2;
+            background: radial-gradient(circle at 20% 20%, #1a2f4e, #0a0e1a);
         }
 
-        h1 {
-            text-align: center;
-            color: #333;
-            margin-bottom: 10px;
-            font-size: 28px;
+        .background::before {
+            content: '';
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            background: url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI4MCIgaGVpZ2h0PSI4MCIgdmlld0JveD0iMCAwIDgwIDgwIj48cGF0aCBkPSJNMzAsMjBhMTAsMTAgMCAwLDEgMjAsMCAxMCwxMCAwIDAsMS0yMCwwIE01MCw1MGExMCwxMCAwIDAsMSAyMCwwIDEwLDEwIDAgMCwxLTIwLDAgTTEwLDUwYTEwLDEwIDAgMCwxIDIwLDAgMTAsMTAgMCAwLDEtMjAsMCBaIiBmaWxsPSIjZmZmIiBvcGFjaXR5PSIwLjAyIi8+PC9zdmc+');
+            opacity: 0.4;
+        }
+
+        .app {
+            position: relative;
+            max-width: 1440px;
+            margin: 0 auto;
+            padding: 24px 32px;
+            z-index: 1;
+        }
+
+        /* Header */
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 32px;
+            padding: 20px 28px;
+            background: rgba(18, 25, 40, 0.7);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border-radius: 28px;
+            border: 1px solid rgba(78, 138, 255, 0.15);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+        }
+
+        .logo-area {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .logo-icon {
+            width: 44px;
+            height: 44px;
+            background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+            border-radius: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            color: white;
+            box-shadow: 0 8px 16px rgba(59, 130, 246, 0.3);
+        }
+
+        .logo-text h1 {
+            font-size: 22px;
+            font-weight: 700;
+            letter-spacing: -0.5px;
+            background: linear-gradient(135deg, #fff, #bdd3ff);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .logo-text span {
+            font-size: 13px;
+            color: #8b9bb5;
             font-weight: 500;
         }
 
-        .subtitle {
-            text-align: center;
-            color: #666;
-            margin-bottom: 30px;
-            font-size: 14px;
+        .connection-status {
             display: flex;
             align-items: center;
-            justify-content: center;
             gap: 10px;
+            padding: 10px 18px;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 40px;
+            border: 1px solid rgba(255, 255, 255, 0.05);
         }
 
         .status-dot {
             width: 10px;
             height: 10px;
             border-radius: 50%;
-            background-color: #4CAF50;
-            display: inline-block;
-            animation: pulse 2s infinite;
+            background: #4caf50;
+            box-shadow: 0 0 12px #4caf50;
         }
 
-        @keyframes pulse {
-            0% { opacity: 1; }
-            50% { opacity: 0.5; }
-            100% { opacity: 1; }
+        .status-dot.disconnected {
+            background: #f44336;
+            box-shadow: 0 0 12px #f44336;
+        }
+
+        .connection-text {
+            font-weight: 500;
+            font-size: 14px;
+            color: #b0c4de;
+        }
+
+        .timestamp {
+            font-size: 13px;
+            color: #6d7f99;
+            background: rgba(0,0,0,0.2);
+            padding: 6px 14px;
+            border-radius: 30px;
+        }
+
+        /* Dashboard Grid */
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 24px;
+            margin-bottom: 28px;
         }
 
         /* Sensor Cards */
-        .sensors-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
-            gap: 15px;
-            margin-bottom: 30px;
-        }
-
         .sensor-card {
-            background: white;
-            border-radius: 15px;
-            padding: 20px;
-            text-align: center;
-            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
-            transition: transform 0.3s ease;
+            background: rgba(18, 25, 40, 0.65);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+            border: 1px solid rgba(78, 138, 255, 0.12);
+            border-radius: 32px;
+            padding: 28px;
+            transition: all 0.3s ease;
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.5);
         }
 
         .sensor-card:hover {
-            transform: translateY(-5px);
+            transform: translateY(-4px);
+            border-color: rgba(59, 130, 246, 0.3);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.6);
+        }
+
+        .sensor-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 20px;
         }
 
         .sensor-icon {
-            font-size: 30px;
-            color: #667eea;
-            margin-bottom: 10px;
+            width: 48px;
+            height: 48px;
+            background: linear-gradient(145deg, #1f2a47, #131c34);
+            border-radius: 18px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 22px;
+            color: #3b82f6;
+            border: 1px solid rgba(59, 130, 246, 0.2);
         }
 
-        .sensor-label {
-            color: #666;
-            font-size: 14px;
-            margin-bottom: 5px;
+        .sensor-title h3 {
+            font-size: 16px;
+            font-weight: 500;
+            color: #9aaec9;
+            letter-spacing: 0.3px;
+        }
+
+        .sensor-main {
+            display: flex;
+            align-items: baseline;
+            justify-content: space-between;
+            margin-bottom: 12px;
         }
 
         .sensor-value {
-            font-size: 28px;
+            font-size: 42px;
             font-weight: 700;
-            color: #333;
-            margin-bottom: 5px;
+            letter-spacing: -1px;
+            color: white;
         }
 
         .sensor-unit {
-            color: #999;
-            font-size: 12px;
+            font-size: 16px;
+            font-weight: 500;
+            color: #6a7f9f;
+            margin-left: 6px;
         }
 
-        .ph-indicator {
-            width: 100%;
-            height: 5px;
-            background: linear-gradient(90deg, #ff4444, #ffbb33, #00C851);
-            border-radius: 5px;
-            margin-top: 10px;
+        .sensor-range {
+            font-size: 13px;
+            color: #6f85a8;
+            background: rgba(0,0,0,0.25);
+            padding: 4px 12px;
+            border-radius: 30px;
+        }
+
+        .ph-scale {
+            margin-top: 16px;
+            height: 8px;
+            background: linear-gradient(90deg, #ef4444, #f59e0b, #10b981, #3b82f6, #8b5cf6);
+            border-radius: 20px;
             position: relative;
         }
 
-        .ph-arrow {
-            width: 2px;
-            height: 12px;
-            background: #333;
+        .ph-indicator {
+            width: 4px;
+            height: 18px;
+            background: white;
+            border-radius: 4px;
             position: absolute;
-            top: -3px;
+            top: -5px;
             transform: translateX(-50%);
+            box-shadow: 0 0 15px white;
             transition: left 0.3s ease;
         }
 
-        /* Control Cards */
-        .controls-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 15px;
-            margin-bottom: 30px;
+        /* Controls Section */
+        .controls-panel {
+            background: rgba(18, 25, 40, 0.65);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+            border: 1px solid rgba(78, 138, 255, 0.12);
+            border-radius: 32px;
+            padding: 28px;
+            margin-bottom: 28px;
         }
 
-        .control-card {
-            background: white;
-            border-radius: 15px;
-            padding: 20px;
-            text-align: center;
-            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        .controls-title {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 24px;
+            font-size: 18px;
+            font-weight: 600;
+            color: #b7c9e2;
+        }
+
+        .controls-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 24px;
+        }
+
+        .control-item {
+            background: rgba(0, 0, 0, 0.25);
+            border-radius: 24px;
+            padding: 24px;
+            border: 1px solid rgba(255,255,255,0.03);
         }
 
         .control-header {
             display: flex;
             align-items: center;
+            gap: 14px;
+            margin-bottom: 24px;
+        }
+
+        .control-icon {
+            width: 52px;
+            height: 52px;
+            background: linear-gradient(145deg, #1e2a44, #141f36);
+            border-radius: 18px;
+            display: flex;
+            align-items: center;
             justify-content: center;
-            gap: 10px;
-            margin-bottom: 15px;
-        }
-
-        .control-header i {
             font-size: 24px;
-            color: #667eea;
+            color: #3b82f6;
         }
 
-        .control-header h3 {
-            color: #333;
+        .control-info h4 {
             font-size: 18px;
-            font-weight: 500;
+            font-weight: 600;
+            color: white;
+            margin-bottom: 4px;
+        }
+
+        .control-info p {
+            font-size: 13px;
+            color: #7c8fb0;
         }
 
         .pin-badge {
-            background: #f0f0f0;
-            color: #666;
-            padding: 3px 8px;
-            border-radius: 12px;
-            font-size: 11px;
-            font-weight: 500;
-            margin-left: 5px;
+            background: #1e2c44;
+            padding: 4px 12px;
+            border-radius: 30px;
+            font-size: 12px;
+            font-weight: 600;
+            color: #8aa4d0;
+            border: 1px solid #2d405c;
         }
 
-        /* Toggle Switch */
+        .toggle-switch {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-top: 16px;
+        }
+
+        .toggle-label {
+            font-size: 15px;
+            font-weight: 500;
+            color: #b0c6e0;
+        }
+
         .switch {
             position: relative;
             display: inline-block;
-            width: 60px;
-            height: 34px;
-            margin: 10px 0;
+            width: 58px;
+            height: 30px;
         }
 
         .switch input {
@@ -207,264 +358,337 @@
             left: 0;
             right: 0;
             bottom: 0;
-            background-color: #ccc;
-            transition: .4s;
-            border-radius: 34px;
+            background-color: #2a3650;
+            transition: .3s;
+            border-radius: 30px;
         }
 
         .slider:before {
             position: absolute;
             content: "";
-            height: 26px;
-            width: 26px;
-            left: 4px;
-            bottom: 4px;
+            height: 24px;
+            width: 24px;
+            left: 3px;
+            bottom: 3px;
             background-color: white;
-            transition: .4s;
+            transition: .3s;
             border-radius: 50%;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.3);
         }
 
         input:checked + .slider {
-            background-color: #667eea;
+            background: linear-gradient(90deg, #3b82f6, #8b5cf6);
         }
 
         input:checked + .slider:before {
-            transform: translateX(26px);
+            transform: translateX(28px);
         }
 
         .control-status {
-            margin-top: 10px;
+            margin-top: 14px;
             font-size: 14px;
-            color: #666;
-        }
-
-        /* Historical Data */
-        .history-section {
-            background: white;
-            border-radius: 15px;
-            padding: 20px;
-            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
-            margin-bottom: 20px;
-        }
-
-        .history-header {
+            color: #7c93b9;
             display: flex;
             align-items: center;
-            gap: 10px;
-            margin-bottom: 15px;
+            gap: 8px;
         }
 
-        .history-header i {
-            color: #667eea;
-            font-size: 20px;
-        }
-
-        .history-header h3 {
-            color: #333;
-            font-size: 16px;
-            font-weight: 500;
-        }
-
-        .history-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 15px;
-        }
-
-        .history-item {
-            text-align: center;
-        }
-
-        .history-label {
-            color: #666;
-            font-size: 12px;
-            margin-bottom: 5px;
-        }
-
-        .history-value {
-            font-size: 18px;
-            font-weight: 500;
-            color: #333;
-        }
-
-        /* Alert Section */
-        .alert-section {
-            background: #fff3cd;
-            border-radius: 10px;
-            padding: 15px;
-            margin-top: 20px;
-            display: none;
-        }
-
-        .alert-section.show {
-            display: block;
-        }
-
-        .alert-content {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            color: #856404;
-        }
-
-        .alert-content i {
-            font-size: 20px;
-        }
-
-        /* Last Update */
-        .last-update {
-            text-align: center;
-            color: #999;
-            font-size: 12px;
-            margin-top: 20px;
-        }
-
-        /* Loading Spinner */
-        .loading {
-            display: inline-block;
-            width: 20px;
-            height: 20px;
-            border: 3px solid #f3f3f3;
-            border-top: 3px solid #667eea;
+        .status-led {
+            width: 8px;
+            height: 8px;
             border-radius: 50%;
-            animation: spin 1s linear infinite;
+            background: #4caf50;
+            box-shadow: 0 0 10px #4caf50;
         }
 
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
+        .status-led.off {
+            background: #6b7c9c;
+            box-shadow: none;
         }
 
-        /* Responsive Design */
-        @media (max-width: 480px) {
-            .container {
-                padding: 20px;
+        /* Charts Row */
+        .charts-row {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 24px;
+            margin-bottom: 28px;
+        }
+
+        .chart-card {
+            background: rgba(18, 25, 40, 0.65);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+            border: 1px solid rgba(78, 138, 255, 0.12);
+            border-radius: 32px;
+            padding: 24px;
+        }
+
+        .chart-header {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 18px;
+        }
+
+        .chart-title {
+            font-weight: 600;
+            color: #d0e0ff;
+        }
+
+        .chart-container {
+            position: relative;
+            height: 200px;
+        }
+
+        /* Stats Cards */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 20px;
+        }
+
+        .stat-card {
+            background: rgba(12, 18, 30, 0.7);
+            backdrop-filter: blur(4px);
+            border-radius: 24px;
+            padding: 18px;
+            border: 1px solid rgba(255,255,255,0.02);
+        }
+
+        .stat-label {
+            font-size: 13px;
+            color: #8192b0;
+            margin-bottom: 8px;
+        }
+
+        .stat-number {
+            font-size: 26px;
+            font-weight: 700;
+            color: white;
+        }
+
+        /* Alert */
+        .alert-bar {
+            margin-top: 28px;
+            padding: 18px 24px;
+            background: rgba(239, 68, 68, 0.15);
+            border: 1px solid rgba(239, 68, 68, 0.3);
+            border-radius: 40px;
+            display: none;
+            align-items: center;
+            gap: 14px;
+            backdrop-filter: blur(8px);
+        }
+
+        .alert-bar.show {
+            display: flex;
+        }
+
+        .alert-icon {
+            color: #ef4444;
+            font-size: 22px;
+        }
+
+        .alert-text {
+            font-weight: 500;
+            color: #ffb3b3;
+        }
+
+        /* Responsive */
+        @media (max-width: 1200px) {
+            .dashboard-grid {
+                grid-template-columns: repeat(2, 1fr);
             }
-            
-            .sensors-grid {
+            .stats-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            .charts-row {
                 grid-template-columns: 1fr;
             }
-            
-            .controls-grid {
-                grid-template-columns: 1fr;
-            }
+        }
+
+        @media (max-width: 700px) {
+            .app { padding: 16px; }
+            .dashboard-grid { grid-template-columns: 1fr; }
+            .controls-grid { grid-template-columns: 1fr; }
+            .header { flex-direction: column; align-items: start; gap: 16px; }
         }
     </style>
 </head>
 <body>
-    <div class="container">
-        <h1>🌿 Algae Tank Controller</h1>
-        <div class="subtitle">
-            <span class="status-dot"></span>
-            <span id="connectionStatus">Connected</span>
-            <span>|</span>
-            <span>ESP32 System</span>
-        </div>
+    <div class="background"></div>
+    <div class="app">
+        <!-- Header -->
+        <header class="header">
+            <div class="logo-area">
+                <div class="logo-icon">
+                    <i class="fas fa-seedling"></i>
+                </div>
+                <div class="logo-text">
+                    <h1>AlgaeTank Pro</h1>
+                    <span>v2.0 · Real-time monitoring</span>
+                </div>
+            </div>
+            <div style="display: flex; align-items: center; gap: 20px;">
+                <div class="connection-status">
+                    <span class="status-dot" id="connectionDot"></span>
+                    <span class="connection-text" id="connectionStatus">Connecting...</span>
+                </div>
+                <div class="timestamp" id="lastUpdate">
+                    <i class="far fa-clock" style="margin-right: 6px;"></i>--:--:--
+                </div>
+            </div>
+        </header>
 
-        <!-- Sensor Cards -->
-        <div class="sensors-grid">
+        <!-- Main sensor cards -->
+        <div class="dashboard-grid">
+            <!-- pH Card -->
             <div class="sensor-card">
-                <div class="sensor-icon">
-                    <i class="fas fa-droplet"></i>
+                <div class="sensor-header">
+                    <div class="sensor-icon"><i class="fas fa-flask"></i></div>
+                    <div class="sensor-title">
+                        <h3>pH Level</h3>
+                    </div>
                 </div>
-                <div class="sensor-label">pH Level</div>
-                <div class="sensor-value" id="phValue">--.--</div>
-                <div class="sensor-unit">pH</div>
-                <div class="ph-indicator" id="phIndicator">
-                    <div class="ph-arrow" id="phArrow" style="left: 50%"></div>
+                <div class="sensor-main">
+                    <span class="sensor-value" id="phValue">7.00</span>
+                    <span class="sensor-unit">pH</span>
+                </div>
+                <div class="sensor-range">Optimal: 6.5–8.5</div>
+                <div class="ph-scale">
+                    <div class="ph-indicator" id="phArrow" style="left: 50%;"></div>
                 </div>
             </div>
 
+            <!-- Temperature Card -->
             <div class="sensor-card">
-                <div class="sensor-icon">
-                    <i class="fas fa-thermometer-half"></i>
+                <div class="sensor-header">
+                    <div class="sensor-icon"><i class="fas fa-thermometer-half"></i></div>
+                    <div class="sensor-title">
+                        <h3>Temperature</h3>
+                    </div>
                 </div>
-                <div class="sensor-label">Temperature</div>
-                <div class="sensor-value" id="tempValue">--.-</div>
-                <div class="sensor-unit">°C</div>
+                <div class="sensor-main">
+                    <span class="sensor-value" id="tempValue">25.0</span>
+                    <span class="sensor-unit">°C</span>
+                </div>
+                <div class="sensor-range">Optimal: 22–28°C</div>
             </div>
 
+            <!-- Turbidity Card -->
             <div class="sensor-card">
-                <div class="sensor-icon">
-                    <i class="fas fa-water"></i>
+                <div class="sensor-header">
+                    <div class="sensor-icon"><i class="fas fa-water"></i></div>
+                    <div class="sensor-title">
+                        <h3>Turbidity</h3>
+                    </div>
                 </div>
-                <div class="sensor-label">Turbidity</div>
-                <div class="sensor-value" id="turbidityValue">---</div>
-                <div class="sensor-unit">NTU</div>
+                <div class="sensor-main">
+                    <span class="sensor-value" id="turbidityValue">42</span>
+                    <span class="sensor-unit">NTU</span>
+                </div>
+                <div class="sensor-range">Clear: < 50 NTU</div>
             </div>
         </div>
 
-        <!-- Control Cards -->
-        <div class="controls-grid">
-            <!-- Water Motor Control (Pin 27) -->
-            <div class="control-card">
-                <div class="control-header">
-                    <i class="fas fa-water-pump"></i>
-                    <h3>Water Motor <span class="pin-badge">PIN 27</span></h3>
-                </div>
-                <label class="switch">
-                    <input type="checkbox" id="pumpToggle" onchange="controlPump(this.checked)">
-                    <span class="slider"></span>
-                </label>
-                <div class="control-status" id="pumpStatus">OFF</div>
+        <!-- Control Panel -->
+        <div class="controls-panel">
+            <div class="controls-title">
+                <i class="fas fa-sliders-h" style="color: #3b82f6;"></i>
+                <span>Actuator Control · GPIO</span>
             </div>
-
-            <!-- Light Control (Pin 26) -->
-            <div class="control-card">
-                <div class="control-header">
-                    <i class="fas fa-lightbulb"></i>
-                    <h3>Light <span class="pin-badge">PIN 26</span></h3>
+            <div class="controls-grid">
+                <!-- Pump Control (Pin 27) -->
+                <div class="control-item">
+                    <div class="control-header">
+                        <div class="control-icon"><i class="fas fa-water-pump"></i></div>
+                        <div class="control-info">
+                            <h4>Water Circulation</h4>
+                            <p>Motor pump · GPIO 27</p>
+                        </div>
+                        <span class="pin-badge">PIN 27</span>
+                    </div>
+                    <div class="toggle-switch">
+                        <span class="toggle-label">Pump state</span>
+                        <label class="switch">
+                            <input type="checkbox" id="pumpToggle" onchange="controlPump(this.checked)">
+                            <span class="slider"></span>
+                        </label>
+                    </div>
+                    <div class="control-status" id="pumpStatus">
+                        <span class="status-led off" id="pumpLed"></span>
+                        <span>Currently OFF</span>
+                    </div>
                 </div>
-                <label class="switch">
-                    <input type="checkbox" id="lightToggle" onchange="controlLight(this.checked)">
-                    <span class="slider"></span>
-                </label>
-                <div class="control-status" id="lightStatus">OFF</div>
+
+                <!-- Light Control (Pin 26) -->
+                <div class="control-item">
+                    <div class="control-header">
+                        <div class="control-icon"><i class="fas fa-sun"></i></div>
+                        <div class="control-info">
+                            <h4>LED Illumination</h4>
+                            <p>Grow light · GPIO 26</p>
+                        </div>
+                        <span class="pin-badge">PIN 26</span>
+                    </div>
+                    <div class="toggle-switch">
+                        <span class="toggle-label">Light state</span>
+                        <label class="switch">
+                            <input type="checkbox" id="lightToggle" onchange="controlLight(this.checked)">
+                            <span class="slider"></span>
+                        </label>
+                    </div>
+                    <div class="control-status" id="lightStatus">
+                        <span class="status-led off" id="lightLed"></span>
+                        <span>Currently OFF</span>
+                    </div>
+                </div>
             </div>
         </div>
 
-        <!-- Historical Data -->
-        <div class="history-section">
-            <div class="history-header">
-                <i class="fas fa-history"></i>
-                <h3>Latest Readings</h3>
+        <!-- Charts & Analytics -->
+        <div class="charts-row">
+            <div class="chart-card">
+                <div class="chart-header">
+                    <span class="chart-title"><i class="far fa-chart-line" style="margin-right: 8px;"></i>pH Trend (last 20 readings)</span>
+                </div>
+                <div class="chart-container">
+                    <canvas id="phChart"></canvas>
+                </div>
             </div>
-            <div class="history-grid">
-                <div class="history-item">
-                    <div class="history-label">Min pH (24h)</div>
-                    <div class="history-value" id="minPH">--.--</div>
+            <div class="chart-card">
+                <div class="chart-header">
+                    <span class="chart-title"><i class="far fa-clock" style="margin-right: 8px;"></i>Statistics</span>
                 </div>
-                <div class="history-item">
-                    <div class="history-label">Max pH (24h)</div>
-                    <div class="history-value" id="maxPH">--.--</div>
-                </div>
-                <div class="history-item">
-                    <div class="history-label">Avg Temp</div>
-                    <div class="history-value" id="avgTemp">--.-°C</div>
-                </div>
-                <div class="history-item">
-                    <div class="history-label">Avg Turbidity</div>
-                    <div class="history-value" id="avgTurbidity">---NTU</div>
+                <div class="stats-grid" style="margin-top: 10px;">
+                    <div class="stat-card">
+                        <div class="stat-label">Min pH</div>
+                        <div class="stat-number" id="minPH">--.--</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label">Max pH</div>
+                        <div class="stat-number" id="maxPH">--.--</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label">Avg Temp</div>
+                        <div class="stat-number" id="avgTemp">--.-°C</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label">Avg Turb</div>
+                        <div class="stat-number" id="avgTurb">---NTU</div>
+                    </div>
                 </div>
             </div>
         </div>
 
-        <!-- Alert Section -->
-        <div class="alert-section" id="alertSection">
-            <div class="alert-content">
-                <i class="fas fa-exclamation-triangle"></i>
-                <span id="alertMessage">pH level is critical!</span>
-            </div>
-        </div>
-
-        <!-- Last Update -->
-        <div class="last-update" id="lastUpdate">
-            Last updated: --:--:--
+        <!-- Alert Bar -->
+        <div class="alert-bar" id="alertSection">
+            <i class="fas fa-exclamation-triangle alert-icon"></i>
+            <span class="alert-text" id="alertMessage">pH level is critical!</span>
         </div>
     </div>
 
     <script>
-        // Firebase configuration
+        // Firebase Config
         const firebaseConfig = {
             apiKey: "AIzaSyADi8f4zj4L3NEAmgWnnJx_XNOTadg1QOA",
             authDomain: "project-bc53c.firebaseapp.com",
@@ -475,191 +699,193 @@
             appId: "1:1076760612229:web:cf45011cd62ba1509ed1e9"
         };
 
-        // Initialize Firebase
         firebase.initializeApp(firebaseConfig);
-        const database = firebase.database();
+        const db = firebase.database();
 
         // DOM Elements
-        const phValue = document.getElementById('phValue');
-        const tempValue = document.getElementById('tempValue');
-        const turbidityValue = document.getElementById('turbidityValue');
+        const phEl = document.getElementById('phValue');
+        const tempEl = document.getElementById('tempValue');
+        const turbEl = document.getElementById('turbidityValue');
+        const phArrow = document.getElementById('phArrow');
         const pumpToggle = document.getElementById('pumpToggle');
         const lightToggle = document.getElementById('lightToggle');
         const pumpStatus = document.getElementById('pumpStatus');
         const lightStatus = document.getElementById('lightStatus');
+        const pumpLed = document.getElementById('pumpLed');
+        const lightLed = document.getElementById('lightLed');
         const lastUpdate = document.getElementById('lastUpdate');
-        const phArrow = document.getElementById('phArrow');
         const alertSection = document.getElementById('alertSection');
         const alertMessage = document.getElementById('alertMessage');
+        const connectionDot = document.getElementById('connectionDot');
         const connectionStatus = document.getElementById('connectionStatus');
         const minPH = document.getElementById('minPH');
         const maxPH = document.getElementById('maxPH');
         const avgTemp = document.getElementById('avgTemp');
-        const avgTurbidity = document.getElementById('avgTurbidity');
+        const avgTurb = document.getElementById('avgTurb');
 
-        // Data arrays for historical tracking
+        // Data arrays
         let phHistory = [];
         let tempHistory = [];
-        let turbidityHistory = [];
-        const maxHistoryLength = 24; // Keep last 24 readings
+        let turbHistory = [];
+        let timestamps = [];
+        const maxPoints = 20;
 
-        // Update pH arrow position
-        function updatePHArrow(ph) {
+        // Chart initialization
+        const ctx = document.getElementById('phChart').getContext('2d');
+        let phChart = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: [],
+                datasets: [{
+                    label: 'pH',
+                    data: [],
+                    borderColor: '#3b82f6',
+                    backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                    borderWidth: 2,
+                    pointRadius: 3,
+                    tension: 0.2,
+                    fill: true
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { legend: { display: false } },
+                scales: {
+                    y: { min: 4, max: 10, grid: { color: 'rgba(255,255,255,0.05)' } },
+                    x: { grid: { display: false } }
+                },
+                elements: { line: { borderWidth: 2 } }
+            }
+        });
+
+        // Update pH arrow
+        function setPhArrow(ph) {
             if (ph >= 0 && ph <= 14) {
-                const percentage = (ph / 14) * 100;
-                phArrow.style.left = percentage + '%';
-            }
-        }
-
-        // Check for alerts
-        function checkAlerts(ph, temp, turb) {
-            let alert = false;
-            let message = '';
-
-            if (ph < 6.5 || ph > 8.5) {
-                alert = true;
-                message = `⚠️ Critical pH level: ${ph.toFixed(2)}! `;
-            }
-            
-            if (temp > 35) {
-                alert = true;
-                message += `High temperature: ${temp.toFixed(1)}°C! `;
-            }
-            
-            if (turb > 200) {
-                alert = true;
-                message += `High turbidity: ${Math.round(turb)} NTU!`;
-            }
-
-            if (alert) {
-                alertSection.classList.add('show');
-                alertMessage.textContent = message;
-            } else {
-                alertSection.classList.remove('show');
-            }
-        }
-
-        // Update historical data
-        function updateHistory(ph, temp, turb) {
-            phHistory.push(ph);
-            tempHistory.push(temp);
-            turbidityHistory.push(turb);
-
-            if (phHistory.length > maxHistoryLength) phHistory.shift();
-            if (tempHistory.length > maxHistoryLength) tempHistory.shift();
-            if (turbidityHistory.length > maxHistoryLength) turbidityHistory.shift();
-
-            // Calculate statistics
-            if (phHistory.length > 0) {
-                minPH.textContent = Math.min(...phHistory).toFixed(2);
-                maxPH.textContent = Math.max(...phHistory).toFixed(2);
-            }
-
-            if (tempHistory.length > 0) {
-                const avg = tempHistory.reduce((a, b) => a + b, 0) / tempHistory.length;
-                avgTemp.textContent = avg.toFixed(1) + '°C';
-            }
-
-            if (turbidityHistory.length > 0) {
-                const avg = turbidityHistory.reduce((a, b) => a + b, 0) / turbidityHistory.length;
-                avgTurbidity.textContent = Math.round(avg) + 'NTU';
+                const percent = (ph / 14) * 100;
+                phArrow.style.left = percent + '%';
             }
         }
 
         // Update timestamp
         function updateTimestamp() {
             const now = new Date();
-            const timeString = now.toLocaleTimeString();
-            lastUpdate.textContent = `Last updated: ${timeString}`;
+            const time = now.toLocaleTimeString('en-US', { hour12: false });
+            lastUpdate.innerHTML = `<i class="far fa-clock" style="margin-right: 6px;"></i>${time}`;
         }
 
-        // Listen for sensor data
-        const sensorsRef = database.ref('algaeTank');
-        sensorsRef.on('value', (snapshot) => {
-            const data = snapshot.val();
-            
-            if (data) {
-                // Update sensor values
-                if (data.ph) {
-                    phValue.textContent = data.ph.toFixed(2);
-                    updatePHArrow(data.ph);
-                }
-                if (data.temperature) {
-                    tempValue.textContent = data.temperature.toFixed(1);
-                }
-                if (data.turbidity) {
-                    turbidityValue.textContent = Math.round(data.turbidity);
-                }
-
-                // Check alerts
-                checkAlerts(data.ph || 7, data.temperature || 25, data.turbidity || 0);
-                
-                // Update history
-                updateHistory(data.ph || 7, data.temperature || 25, data.turbidity || 0);
-                
-                // Update timestamp
-                updateTimestamp();
+        // Update stats
+        function updateStats() {
+            if (phHistory.length) {
+                minPH.textContent = Math.min(...phHistory).toFixed(2);
+                maxPH.textContent = Math.max(...phHistory).toFixed(2);
             }
-        });
-
-        // Listen for pump state
-        const pumpRef = database.ref('algaeTank/pump');
-        pumpRef.on('value', (snapshot) => {
-            const state = snapshot.val();
-            pumpToggle.checked = state === 1;
-            pumpStatus.textContent = state === 1 ? 'ON' : 'OFF';
-            pumpStatus.style.color = state === 1 ? '#4CAF50' : '#999';
-        });
-
-        // Listen for light state
-        const lightRef = database.ref('algaeTank/light');
-        lightRef.on('value', (snapshot) => {
-            const state = snapshot.val();
-            lightToggle.checked = state === 1;
-            lightStatus.textContent = state === 1 ? 'ON' : 'OFF';
-            lightStatus.style.color = state === 1 ? '#4CAF50' : '#999';
-        });
-
-        // Control pump (water motor - Pin 27)
-        function controlPump(state) {
-            const value = state ? 1 : 0;
-            pumpRef.set(value)
-                .then(() => {
-                    console.log('Pump (Pin 27) set to:', value ? 'ON' : 'OFF');
-                })
-                .catch((error) => {
-                    console.error('Error setting pump:', error);
-                    pumpToggle.checked = !state; // Revert on error
-                });
+            if (tempHistory.length) {
+                const avg = tempHistory.reduce((a,b)=>a+b,0)/tempHistory.length;
+                avgTemp.textContent = avg.toFixed(1) + '°C';
+            }
+            if (turbHistory.length) {
+                const avg = turbHistory.reduce((a,b)=>a+b,0)/turbHistory.length;
+                avgTurb.textContent = Math.round(avg) + 'NTU';
+            }
         }
 
-        // Control light (Pin 26)
-        function controlLight(state) {
-            const value = state ? 1 : 0;
-            lightRef.set(value)
-                .then(() => {
-                    console.log('Light (Pin 26) set to:', value ? 'ON' : 'OFF');
-                })
-                .catch((error) => {
-                    console.error('Error setting light:', error);
-                    lightToggle.checked = !state; // Revert on error
-                });
+        // Alert check
+        function checkAlerts(ph, temp, turb) {
+            let show = false;
+            let msg = '';
+
+            if (ph < 6.0 || ph > 9.0) {
+                show = true;
+                msg = `⚠️ Critical pH: ${ph.toFixed(2)} (outside 6.0–9.0)`;
+            } else if (temp > 35) {
+                show = true;
+                msg = `🔥 High temperature: ${temp.toFixed(1)}°C`;
+            } else if (turb > 200) {
+                show = true;
+                msg = `🌊 High turbidity: ${Math.round(turb)} NTU`;
+            }
+
+            if (show) {
+                alertSection.classList.add('show');
+                alertMessage.textContent = msg;
+            } else {
+                alertSection.classList.remove('show');
+            }
         }
+
+        // Firebase listeners
+        const sensorsRef = db.ref('algaeTank');
+        sensorsRef.on('value', (snap) => {
+            const data = snap.val();
+            if (!data) return;
+
+            // Update values
+            if (data.ph !== undefined) {
+                phEl.textContent = data.ph.toFixed(2);
+                setPhArrow(data.ph);
+                phHistory.push(data.ph);
+            }
+            if (data.temperature !== undefined) {
+                tempEl.textContent = data.temperature.toFixed(1);
+                tempHistory.push(data.temperature);
+            }
+            if (data.turbidity !== undefined) {
+                turbEl.textContent = Math.round(data.turbidity);
+                turbHistory.push(data.turbidity);
+            }
+
+            // Trim history
+            if (phHistory.length > maxPoints) phHistory.shift();
+            if (tempHistory.length > maxPoints) tempHistory.shift();
+            if (turbHistory.length > maxPoints) turbHistory.shift();
+
+            // Update chart
+            phChart.data.labels = Array(phHistory.length).fill('•');
+            phChart.data.datasets[0].data = phHistory;
+            phChart.update();
+
+            updateStats();
+            checkAlerts(data.ph || 7, data.temperature || 25, data.turbidity || 0);
+            updateTimestamp();
+        });
+
+        // Pump listener
+        db.ref('algaeTank/pump').on('value', (snap) => {
+            const state = snap.val() === 1;
+            pumpToggle.checked = state;
+            pumpStatus.innerHTML = `<span class="status-led ${state ? '' : 'off'}" id="pumpLed"></span><span>Currently ${state ? 'ON' : 'OFF'}</span>`;
+        });
+
+        // Light listener
+        db.ref('algaeTank/light').on('value', (snap) => {
+            const state = snap.val() === 1;
+            lightToggle.checked = state;
+            lightStatus.innerHTML = `<span class="status-led ${state ? '' : 'off'}" id="lightLed"></span><span>Currently ${state ? 'ON' : 'OFF'}</span>`;
+        });
 
         // Connection status
-        const connectedRef = database.ref('.info/connected');
-        connectedRef.on('value', (snap) => {
-            if (snap.val() === true) {
+        db.ref('.info/connected').on('value', (snap) => {
+            if (snap.val()) {
+                connectionDot.className = 'status-dot';
                 connectionStatus.textContent = 'Connected';
-                connectionStatus.style.color = '#4CAF50';
             } else {
+                connectionDot.className = 'status-dot disconnected';
                 connectionStatus.textContent = 'Disconnected';
-                connectionStatus.style.color = '#ff4444';
             }
         });
 
-        // Initialize with default values
-        updatePHArrow(7);
+        // Control functions
+        function controlPump(state) {
+            db.ref('algaeTank/pump').set(state ? 1 : 0);
+        }
+
+        function controlLight(state) {
+            db.ref('algaeTank/light').set(state ? 1 : 0);
+        }
+
+        // Initialize arrow
+        setPhArrow(7.0);
     </script>
 </body>
 </html>
